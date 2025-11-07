@@ -1,26 +1,45 @@
 # PXPayBackend - Todo API
 
-這是我用 ASP.NET Core 寫的待辦事項 API，用來練習和展示基本的 CRUD 操作。
+這是我用 ASP.NET Core 寫的待辦事項 API，用來練習和展示完整的 CRUD 操作，並整合了 SQL Server 資料庫。
 
 ## 環境需求
 
 - .NET 8.0 SDK
+- Docker Desktop（用來跑 SQL Server）
 - 任何能跑 .NET 的作業系統（Windows / macOS / Linux）
 
 ## 怎麼跑起來
 
-1. 先 clone 下來
+### 1. 先啟動 SQL Server（用 Docker）
+
+```bash
+docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=YourStrong@Passw0rd" \
+  -p 1433:1433 --name sqlserver \
+  -d mcr.microsoft.com/mssql/server:2022-latest
+```
+
+### 2. Clone 專案並還原套件
+
 ```bash
 git clone https://github.com/kaohaohan/PXPayBackend.git
 cd PXPayBackend
+dotnet restore
 ```
 
-2. 直接跑
+### 3. 執行資料庫遷移（建立資料表）
+
+```bash
+dotnet ef database update
+```
+
+### 4. 啟動 API
+
 ```bash
 dotnet run --urls "http://localhost:5000"
 ```
 
-3. 打開瀏覽器，輸入這個網址就能看到 API 測試頁面了
+### 5. 打開 Swagger 測試頁面
+
 ```
 http://localhost:5000/swagger
 ```
@@ -40,22 +59,31 @@ http://localhost:5000/swagger
 ```
 PXPayBackend/
 ├── Controllers/
-│   └── TodoItemsController.cs    # API 邏輯都在這
+│   └── TodoItemsController.cs    # API 邏輯（使用 async/await + DI）
 ├── Models/
 │   └── TodoItem.cs                # 資料結構定義
-├── Program.cs                     # 程式進入點
+├── Data/
+│   └── TodoContext.cs             # EF Core DbContext（資料庫連線）
+├── Migrations/                    # 資料庫遷移檔案
+├── Program.cs                     # 程式進入點（IOC/DI 設定）
+├── appsettings.json               # 資料庫連線字串設定
 └── PXPayBackend.csproj           # 專案設定檔
 ```
 
 ## 用到的技術
 
 - **ASP.NET Core Web API** - 主要框架
+- **Entity Framework Core** - ORM（物件關聯映射）
+- **SQL Server** - 關聯式資料庫
+- **IOC/DI（依賴注入）** - 將 DbContext 注入到 Controller
+- **async/await** - 非同步程式設計，提升效能
 - **Swagger** - API 文件跟測試界面
-- **LINQ & Lambda** - 資料查詢用的（例如 `_todos.Find(x => x.Id == id)`）
+- **LINQ & Lambda** - 資料查詢（例如 `await _context.TodoItems.FindAsync(id)`）
+- **Migration（資料庫遷移）** - 自動管理資料庫結構變更
 
 ## 資料存儲
 
-目前是用記憶體內的 List 存資料，所以重啟就會清掉。如果要做成正式的，可以接上資料庫（Entity Framework Core + SQL Server）。
+使用 **SQL Server** 作為資料庫，透過 **Entity Framework Core** 進行資料存取。資料會持久化儲存，伺服器重啟後資料不會消失。
 
 ## 測試方式
 
@@ -68,13 +96,23 @@ PXPayBackend/
 4. 用 PUT 更新資料
 5. 用 DELETE 刪掉
 
-## 備註
+## 技術亮點
 
-這個專案主要是展示 ASP.NET Core 的基本用法，包含：
-- Controller 的寫法
-- RESTful API 設計
-- Lambda 表達式的應用
-- 基本的錯誤處理（404 Not Found、400 Bad Request）
+這個專案展示了企業級 ASP.NET Core 開發的核心技術：
+
+1. **RESTful API 設計** - 標準的 HTTP 方法和狀態碼
+2. **Entity Framework Core ORM** - Code First 方式管理資料庫
+3. **IOC/DI 架構模式** - 鬆耦合、可測試的程式碼設計
+4. **非同步程式設計** - 所有資料庫操作都使用 async/await
+5. **資料庫遷移** - 使用 EF Core Migrations 管理資料表結構
+6. **LINQ & Lambda 表達式** - 優雅的資料查詢語法
+7. **錯誤處理** - 404 Not Found、400 Bad Request、並發處理
+
+## 注意事項
+
+- 如果要修改資料庫連線字串，請編輯 `appsettings.json` 的 `ConnectionStrings` 區塊
+- 執行專案前請確保 Docker 中的 SQL Server 容器正在運行
+- 若要查看資料庫內容，可使用 Azure Data Studio 或 SQL Server Management Studio
 
 有任何問題歡迎聯絡我！
 
