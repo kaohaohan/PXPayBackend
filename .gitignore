@@ -1,0 +1,19 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.dll
+*.exe
+*.pdb
+*.log
+
+## macOS
+.DS_Store
+
+## IDE
+.vs/
+.vscode/
+*.swp
+
