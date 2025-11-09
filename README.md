@@ -2,6 +2,8 @@
 
 這是我用 ASP.NET Core 寫的待辦事項 API，用來練習和展示完整的 CRUD 操作，並整合了 SQL Server 資料庫。
 
+> 🚀 **此專案已整合 CI/CD**，每次 push 都會自動執行編譯和測試！
+
 ## 環境需求
 
 - .NET 8.0 SDK
