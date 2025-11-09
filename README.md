@@ -107,6 +107,27 @@ PXPayBackend/
 5. **資料庫遷移** - 使用 EF Core Migrations 管理資料表結構
 6. **LINQ & Lambda 表達式** - 優雅的資料查詢語法
 7. **錯誤處理** - 404 Not Found、400 Bad Request、並發處理
+8. **ACID Transaction** - 批次刪除 API 展示交易處理（原子性、一致性）
+9. **CI/CD 自動化** - GitHub Actions 自動建置和測試
+
+## CI/CD 自動化
+
+本專案已整合 **GitHub Actions** 和 **GitLab CI**，每次 push 或 PR 時會自動：
+
+1. ✅ **還原套件** - `dotnet restore`
+2. ✅ **編譯專案** - `dotnet build`
+3. ✅ **執行測試** - `dotnet test`（如果有測試專案）
+4. ✅ **程式碼品質檢查** - `dotnet format`
+
+### GitHub Actions
+
+查看建置狀態：前往專案的 **Actions** 頁籤
+
+設定檔位置：`.github/workflows/dotnet.yml`
+
+### GitLab CI
+
+如果你想在 GitLab 上使用，專案已包含 `.gitlab-ci.yml` 設定檔，直接推送到 GitLab 即可自動觸發 CI/CD Pipeline。
 
 ## 注意事項
 
