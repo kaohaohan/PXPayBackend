@@ -20,6 +20,9 @@ namespace PXPayBackend.Data
         // 就像 Mongoose 的 model('Todo', todoSchema)
         //TodoItems 型別是 DbSet<TodoItem>所以可以提供查詢方法
         public DbSet<TodoItem> TodoItems { get; set; } = null!;
+        
+        // 新增 Products 表
+        public DbSet<Product> Products { get; set; } = null!;
     }
 }
 

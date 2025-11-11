@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using PXPayBackend.Data;
+using PXPayBackend.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,7 +9,14 @@ var builder = WebApplication.CreateBuilder(args);
 // 注册 DbContext (IOC/DI 的核心！)
 // 当 Controller 需要 TodoContext 时，.NET 会自动注入
 builder.Services.AddDbContext<TodoContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseInMemoryDatabase("TodoList"));
+
+// 注册 Memory Cache（用於高流量優化）
+builder.Services.AddMemoryCache();
+
+// 注册 Service 層（業務邏輯）
+// Scoped：每個 HTTP 請求會建立一個新的實例
+builder.Services.AddScoped<IProductService, ProductService>();
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -24,7 +32,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // 暫時關閉 HTTPS 重定向，方便測試
 
 app.UseAuthorization();
 
