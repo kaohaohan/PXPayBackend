@@ -55,7 +55,8 @@ public class ProductService : IProductService
              // Cache Miss：沒有快取，需要查詢資料庫
             stock = await GetStockFromDatabaseAsync();
         
-            // 把資料存入 Cache（5 秒後過期）
+            // 把資料存入 Cache（設定5 秒後過期）
+            //因為cache不會自動更新 
             var cacheOptions = new MemoryCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(5)

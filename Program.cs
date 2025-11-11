@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PXPayBackend.Data;
 using PXPayBackend.Services;
+using AspNetCoreRateLimit;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +14,23 @@ builder.Services.AddDbContext<TodoContext>(options =>
 
 // 注册 Memory Cache（用於高流量優化）
 builder.Services.AddMemoryCache();
+
+// 注册 Rate Limiting（限流）
+builder.Services.Configure<IpRateLimitOptions>(options =>
+{
+    options.GeneralRules = new List<RateLimitRule>
+    {
+        new RateLimitRule
+        {
+            Endpoint = "*",
+            Limit = 10,
+            Period = "1m"
+        }
+    };
+});
+builder.Services.AddInMemoryRateLimiting();
+builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+
 
 // 注册 Service 層（業務邏輯）
 // Scoped：每個 HTTP 請求會建立一個新的實例
@@ -33,6 +51,9 @@ if (app.Environment.IsDevelopment())
 }
 
 // app.UseHttpsRedirection(); // 暫時關閉 HTTPS 重定向，方便測試
+
+// 啟用 Rate Limiting 中間件
+app.UseIpRateLimiting();
 
 app.UseAuthorization();
 

@@ -63,6 +63,10 @@ http://localhost:5000/swagger
 - `GET /api/products/stock/no-cache` - 查詢庫存（沒有 Cache，用來對比）
 - `POST /api/products/init` - 初始化測試資料
 
+### 安全防護
+
+- **Rate Limiting（限流）** - 每個 IP 每分鐘最多 10 次請求，防止 DDoS 攻擊
+
 ## 專案結構
 
 ```
@@ -90,6 +94,7 @@ PXPayBackend/
 - **Entity Framework Core** - ORM（物件關聯映射）
 - **InMemory Database** - 記憶體資料庫（開發/測試用）
 - **Memory Cache** - 記憶體快取（效能優化）
+- **Rate Limiting** - API 限流（防止 DDoS 攻擊）
 - **MVC + Service 分層架構** - Controller → Service → Repository
 - **IOC/DI（依賴注入）** - Interface + Constructor Injection
 - **async/await** - 非同步程式設計，提升效能
@@ -120,27 +125,56 @@ PXPayBackend/
 1. **RESTful API 設計** - 標準的 HTTP 方法和狀態碼
 2. **MVC + Service 分層架構** - Controller → Service → Repository，職責分離
 3. **Memory Cache 效能優化** - 查詢效能提升 10,000 倍（500ms → 0.05ms）
-4. **Entity Framework Core ORM** - Code First 方式管理資料庫
-5. **IOC/DI 架構模式** - Interface + Constructor Injection，鬆耦合設計
-6. **非同步程式設計** - 所有資料庫操作都使用 async/await
-7. **LINQ & Lambda 表達式** - 優雅的資料查詢語法
-8. **ACID Transaction** - 批次刪除 API 展示交易處理（原子性、一致性）
-9. **CI/CD 自動化** - GitHub Actions 自動建置和測試
+4. **Rate Limiting 限流保護** - 防止 DDoS 攻擊，每個 IP 每分鐘最多 10 次請求
+5. **Entity Framework Core ORM** - Code First 方式管理資料庫
+6. **IOC/DI 架構模式** - Interface + Constructor Injection，鬆耦合設計
+7. **非同步程式設計** - 所有資料庫操作都使用 async/await
+8. **LINQ & Lambda 表達式** - 優雅的資料查詢語法
+9. **ACID Transaction** - 批次刪除 API 展示交易處理（原子性、一致性）
+10. **CI/CD 自動化** - GitHub Actions 自動建置和測試
 
 ## 效能優化展示
 
 ### Cache 效能對比
 
-| API | 第一次請求 | 第二次請求 | 效能提升 |
-|-----|----------|----------|---------|
-| `/stock/no-cache` | 500ms | 500ms | - |
-| `/stock` (有 Cache) | 500ms | **0.05ms** | **10,000 倍** |
+| API                 | 第一次請求 | 第二次請求 | 效能提升      |
+| ------------------- | ---------- | ---------- | ------------- |
+| `/stock/no-cache`   | 500ms      | 500ms      | -             |
+| `/stock` (有 Cache) | 500ms      | **0.05ms** | **10,000 倍** |
 
 **適用場景：**
+
 - 高流量搶購活動
 - 10 萬人同時查詢庫存
 - 5 秒內的請求都從 Cache 取
 - 資料庫壓力減少 99%
+
+### Rate Limiting 限流保護
+
+**功能：** 防止 DDoS 攻擊和惡意濫用
+
+**規則：** 每個 IP 每分鐘最多 10 次請求
+
+**測試方式：**
+1. 打開 Swagger：`http://localhost:5000/swagger`
+2. 選擇任一 API（例如 `GET /api/Products/stock`）
+3. 連續點擊 11 次「Execute」
+
+**預期結果：**
+- 前 10 次：✅ 200 OK
+- 第 11 次：❌ 429 Too Many Requests
+
+**回應訊息：**
+```json
+{
+  "message": "API calls quota exceeded! maximum admitted 10 per 1m."
+}
+```
+
+**技術實作：**
+- 使用 `AspNetCoreRateLimit` 套件
+- 透過 Middleware 在請求進入 Controller 前攔截
+- 計數器存在記憶體裡，可擴展為 Redis（分散式環境）
 
 ## CI/CD 自動化
 
