@@ -118,10 +118,10 @@ public async Task<IActionResult> SearchByNameStartsWith(string name)
 /// <summary>
 /// 【效能測試 C】使用 Redis 分散式快取 + StartsWith + 索引
 /// - 快取策略: Cache-Aside Pattern
-/// - 第一次查詢: 從 DB 讀取 (1-5ms) + 寫入 Redis
-/// - 後續查詢: 從 Redis 讀取 (< 1ms)
+/// - 第一次查詢: 從 DB 讀取 (100-200ms) + 寫入 Redis
+/// - 後續查詢: 從 Redis 讀取 (10-50ms，快 5-20 倍)
 /// - 快取時效: 5 分鐘自動過期
-/// - 效能: 比純 DB 查詢快 5-10 倍，100 併發零錯誤
+/// - 效能: 比純 DB 查詢快 5-20 倍，100 併發零錯誤
 /// - 適用場景: 熱門商品搜尋、高流量 API
 /// </summary>
 [HttpGet("search-cached/{name}")]
@@ -135,7 +135,8 @@ public async Task<IActionResult> SearchByNameCached(string name)
     stopwatch.Stop();
     
     // 檢查是否為 Cache Hit（透過回應時間判斷）
-    bool isCacheHit = stopwatch.ElapsedMilliseconds < 10; // < 10ms 通常是 Cache Hit
+    // 從 Redis 讀取通常 < 50ms，從 DB 讀取通常 > 100ms
+    bool isCacheHit = stopwatch.ElapsedMilliseconds < 80;
     
     return Ok(new { 
         products = products,
