@@ -106,7 +106,7 @@ public class ProductService : IProductService
     }
 
 
-    //創假資料到db裡
+    //創資料到db裡 
     public async Task<bool>  CreateTestProductsAsync()  // 建立測試商品
     {
         //  先判斷資料是否已存在
@@ -161,11 +161,6 @@ public class ProductService : IProductService
     /// 問題: % 在前面會導致無法使用索引，必須全表掃描
     /// 時間複雜度: O(n) - 需要檢查每一筆資料
     /// 
-    /// 實測效能 (100,000 筆資料):
-    /// - 單次查詢: 200-300ms
-    /// - 100 併發: 錯誤率 80% (大量 Socket Closed 錯誤)
-    /// 
-    /// 適用場景: 需要搜尋名稱中任意位置的關鍵字
     /// </summary>
     public async Task<List<Product>> FindProductsByNameAsync(string name)
     {
@@ -203,12 +198,6 @@ public class ProductService : IProductService
     /// 1. 先查 Redis，如果有就直接回傳 (Cache Hit)
     /// 2. 如果沒有，查資料庫 (Cache Miss)
     /// 3. 把結果存入 Redis，設定過期時間 5 分鐘
-    /// 
-    /// 實測效能 (100,000 筆資料):
-    /// - Cache Hit: < 1ms (從 Redis 讀取)
-    /// - Cache Miss: 1-5ms (從 DB 讀取 + 寫入 Redis)
-    /// - 100 併發: 錯誤率 0%, 平均回應 < 100ms
-    /// 
     /// Redis 優勢:
     /// - 分散式快取 (多台伺服器共用)
     /// - 持久化 (重啟不會遺失)

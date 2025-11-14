@@ -6,23 +6,19 @@ using AspNetCoreRateLimit;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
-// 注册 DbContext (IOC/DI 的核心！)
-// 当 Controller 需要 TodoContext 时，.NET 会自动注入
 builder.Services.AddDbContext<TodoContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// 注册 Memory Cache（用於高流量優化）
-builder.Services.AddMemoryCache();
 
-// 注册 Redis 分散式快取
+builder.Services.AddMemoryCache();
+// 註冊radis 
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = builder.Configuration.GetConnectionString("Redis");
-    options.InstanceName = "ECommerceCache_"; // 快取 Key 的前綴
+    options.InstanceName = "ECommerceCache_"; 
 });
 
-// 注册 Rate Limiting（限流）
+// Rate Limiting
 builder.Services.Configure<IpRateLimitOptions>(options =>
 {
     options.GeneralRules = new List<RateLimitRule>
@@ -80,11 +76,12 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-// 啟動時自動建立測試資料
-using (var scope = app.Services.CreateScope())
-{
-    var productService = scope.ServiceProvider.GetRequiredService<IProductService>();
-    await productService.CreateTestProductsAsync();
-}
+// 啟動時自動建立測試資料（已註解，資料已存在）
+// using (var scope = app.Services.CreateScope())
+// {
+//     var productService = scope.ServiceProvider.GetRequiredService<IProductService>();
+//     await productService.CreateTestProductsAsync();
+// }
 
-app.Run();
+// 使用 port 5000
+app.Run("http://localhost:5000");

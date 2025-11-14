@@ -3,18 +3,21 @@
 ## 專案亮點 (Key Achievements)
 
 ### High-Concurrency Optimization
+
 - 使用 JMeter 進行壓力測試：100 併發用戶 × 100,000 筆資料
 - 實作三層優化架構：Database Indexing + Redis Cache + Connection Pooling
 
 ### 量化成果 (Quantitative Results)
 
 #### 1️⃣ Database Indexing 優化
+
 - **錯誤率**: 從 80% 降至 0% (Zero downtime)
 - **吞吐量**: 從 7.5 req/min 提升至 44.8 req/sec (提升 ~300 倍)
 - **平均回應時間**: 從 9.5 秒降至 2.2 秒 (改善 76%)
 - **時間複雜度**: O(n) → O(log n)
 
 #### 2️⃣ Redis Cache 優化
+
 - **Cache Miss**: 319ms (首次查詢)
 - **Cache Hit**: 58-60ms (後續查詢)
 - **效能提升**: 5.3-5.5 倍
@@ -54,6 +57,7 @@
 ## 📊 API 端點比較
 
 ### 1. `/api/products/search/{name}` - 無優化版本
+
 - **方法**: Contains() → `LIKE '%keyword%'`
 - **索引**: ❌ 無法使用
 - **快取**: ❌ 無
@@ -61,6 +65,7 @@
 - **適用**: 需要搜尋任意位置的關鍵字
 
 ### 2. `/api/products/search-starts-with/{name}` - 索引優化版本
+
 - **方法**: StartsWith() → `LIKE 'keyword%'`
 - **索引**: ✅ B-Tree Index
 - **快取**: ❌ 無
@@ -68,10 +73,11 @@
 - **適用**: 搜尋名稱開頭的關鍵字
 
 ### 3. `/api/products/search-cached/{name}` - Redis 快取版本
+
 - **方法**: StartsWith() → `LIKE 'keyword%'`
 - **索引**: ✅ B-Tree Index
 - **快取**: ✅ Redis (5 min TTL)
-- **效能**: 
+- **效能**:
   - Cache Miss: 319ms
   - Cache Hit: 58-60ms
 - **適用**: 熱門商品搜尋、高流量 API
@@ -88,6 +94,7 @@ WHERE Name LIKE '%全聯先生%'
 ```
 
 **問題**: `%` 在前面會導致：
+
 1. 資料庫無法使用 B-Tree 索引
 2. 必須進行全表掃描 (Full Table Scan)
 3. 時間複雜度: O(n)
@@ -100,6 +107,7 @@ WHERE Name LIKE '全聯先生%'
 ```
 
 **優勢**: 沒有前置 `%`，可以：
+
 1. 使用 B-Tree 索引進行前綴搜尋
 2. 只掃描符合前綴的資料
 3. 時間複雜度: O(log n)
@@ -146,17 +154,20 @@ WHERE Name LIKE '全聯先生%'
 ### 問題：Socket Exhaustion (Socket 耗盡)
 
 **症狀**:
+
 ```
 java.net.SocketException: Socket closed
 Error Rate: 80%
 ```
 
 **原因**:
+
 - 高併發下，每個請求都建立新的 DB 連線
 - 連線建立/關閉很慢 (TCP 三次握手)
 - 系統 Socket 數量有限
 
 **解決方案**:
+
 ```csharp
 "Min Pool Size=10;Max Pool Size=200;Connection Timeout=30;"
 ```
@@ -170,6 +181,7 @@ Error Rate: 80%
 ## 📈 JMeter 壓力測試
 
 ### 測試設定
+
 - **Thread Count**: 100 (併發用戶)
 - **Ramp-Up Period**: 1 秒
 - **Loop Count**: 1
@@ -177,11 +189,11 @@ Error Rate: 80%
 
 ### 測試結果對比
 
-| 指標 | 無索引 | 有索引 | 有索引+Redis |
-|------|--------|--------|--------------|
-| 錯誤率 | 80% | 0% | 0% |
-| 平均回應時間 | 9.5s | 2.2s | 0.06s (Cache Hit) |
-| 吞吐量 | 7.5/min | 44.8/sec | ~1000/sec (Cache Hit) |
+| 指標         | 無索引  | 有索引   | 有索引+Redis          |
+| ------------ | ------- | -------- | --------------------- |
+| 錯誤率       | 80%     | 0%       | 0%                    |
+| 平均回應時間 | 9.5s    | 2.2s     | 0.06s (Cache Hit)     |
+| 吞吐量       | 7.5/min | 44.8/sec | ~1000/sec (Cache Hit) |
 
 ---
 
@@ -194,30 +206,35 @@ Error Rate: 80%
 ### 2. 說明問題分析
 
 > "我用 JMeter 進行壓力測試，發現主要有兩個問題：
+>
 > 1. 資料庫查詢太慢 - 因為使用 Contains() 無法利用索引
 > 2. 高併發下出現 Socket Exhaustion - 因為沒有設定 Connection Pool"
 
 ### 3. 說明解決方案
 
 > "我實作了三層優化：
-> 
+>
 > **第一層：Database Indexing**
+>
 > - 在 Product.Name 欄位建立 B-Tree 索引
 > - 將查詢從 Contains() 改為 StartsWith()
 > - 時間複雜度從 O(n) 降至 O(log n)
-> 
+>
 > **第二層：Redis Cache**
+>
 > - 使用 Cache-Aside Pattern
 > - 熱門查詢從 Redis 讀取，快 5 倍
 > - 設定 5 分鐘 TTL，避免資料過期
-> 
+>
 > **第三層：Connection Pooling**
+>
 > - 設定 Min Pool Size 10, Max Pool Size 200
 > - 避免高併發下的 Socket Exhaustion"
 
 ### 4. 說明成果
 
 > "最終結果：
+>
 > - 錯誤率從 80% 降至 0%
 > - 吞吐量提升 300 倍
 > - 平均回應時間改善 76%
@@ -226,6 +243,7 @@ Error Rate: 80%
 ### 5. 展現學習能力
 
 > "這個專案讓我學到：
+>
 > 1. 索引的重要性 - 不是所有查詢都能用索引
 > 2. 快取策略 - Cache-Aside 適合讀多寫少的場景
 > 3. 系統調優 - Connection Pool 可以大幅提升併發能力
@@ -237,7 +255,8 @@ Error Rate: 80%
 
 ### Q1: 為什麼不用 Full-Text Search？
 
-**A**: 
+**A**:
+
 - Full-Text Search 更適合複雜的文字搜尋（如搜尋引擎）
 - 我們的場景是簡單的前綴搜尋，B-Tree Index 就夠了
 - B-Tree Index 更輕量，維護成本更低
@@ -245,6 +264,7 @@ Error Rate: 80%
 ### Q2: Redis 掛掉怎麼辦？
 
 **A**:
+
 - Cache-Aside Pattern 的優勢：Redis 掛掉還能從 DB 讀取
 - 可以加 try-catch，Redis 失敗時直接查 DB
 - 生產環境會用 Redis Cluster 做高可用
@@ -252,6 +272,7 @@ Error Rate: 80%
 ### Q3: 為什麼 Cache 設定 5 分鐘過期？
 
 **A**:
+
 - 平衡資料新鮮度和效能
 - 商品資料不常變動，5 分鐘是合理的
 - 如果商品更新，可以手動清除 Cache
@@ -259,6 +280,7 @@ Error Rate: 80%
 ### Q4: 如果要支援模糊搜尋怎麼辦？
 
 **A**:
+
 - 可以用 Elasticsearch 或 Full-Text Search
 - 或者用 N-gram 索引
 - 或者前端用 StartsWith，後端用 Contains 做二次過濾
@@ -266,6 +288,7 @@ Error Rate: 80%
 ### Q5: 100 併發算高嗎？
 
 **A**:
+
 - 對小型電商來說算高了
 - 大型電商可能上千上萬併發
 - 但優化思路是一樣的：索引 + 快取 + 連線池
@@ -277,6 +300,7 @@ Error Rate: 80%
 **專案網址**: https://github.com/kaohaohan/E-Commerce-Backend
 
 **重點 Commit**:
+
 - Database Indexing: `docs: 新增詳細的效能優化註解和技術說明`
 - Redis Cache: `feat: 新增 Redis 分散式快取支援`
 - Bug Fix: `fix: 修正 Redis Cache Hit 判斷邏輯`
@@ -331,6 +355,7 @@ curl http://localhost:5000/api/products/search-cached/全聯先生
 ## 🎯 總結
 
 這個專案展現了我：
+
 1. ✅ **問題分析能力** - 用 JMeter 找出瓶頸
 2. ✅ **技術實作能力** - 實作 Index + Redis + Connection Pool
 3. ✅ **效能優化能力** - 錯誤率從 80% 降至 0%
@@ -342,4 +367,3 @@ curl http://localhost:5000/api/products/search-cached/全聯先生
 ---
 
 祝面試順利！🚀
-
