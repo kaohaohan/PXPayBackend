@@ -43,6 +43,17 @@ builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>()
 // Scoped：每個 HTTP 請求會建立一個新的實例
 builder.Services.AddScoped<IProductService, ProductService>();
 
+// 注册 CORS（允許前端跨域請求）
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -58,6 +69,9 @@ if (app.Environment.IsDevelopment())
 }
 
 // app.UseHttpsRedirection(); // 暫時關閉 HTTPS 重定向，方便測試
+
+// 啟用 CORS
+app.UseCors("AllowAll");
 
 // 啟用 Rate Limiting 中間件
 // app.UseIpRateLimiting();

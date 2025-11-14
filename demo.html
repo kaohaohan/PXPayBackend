@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce API 效能測試 Demo</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .stat-card h3 {
+            color: #667eea;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .stat-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .api-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .api-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+
+        .api-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .api-card h2 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+
+        .api-card .description {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .api-card .tech-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .tech-tag {
+            background: #f0f0f0;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: #555;
+        }
+
+        .tech-tag.highlight {
+            background: #667eea;
+            color: white;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: white;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: scale(1.02);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result.success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+        }
+
+        .result.warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+        }
+
+        .result.danger {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .result-time {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .result-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        .badge-fast {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-medium {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .badge-slow {
+            background: #dc3545;
+            color: white;
+        }
+
+        .result-details {
+            color: #333;
+            line-height: 1.8;
+        }
+
+        .comparison {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .comparison h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .comparison-table th {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        .comparison-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            padding: 20px;
+        }
+
+        .footer a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .data-preview {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .data-preview h4 {
+            color: #667eea;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .data-table th {
+            background: #f8f9fa;
+            color: #333;
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+        }
+
+        .data-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .toggle-data-btn {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        .toggle-data-btn:hover {
+            background: #5568d3;
+        }
+
+        .data-info {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        function App() {
+            const [results, setResults] = useState({});
+            const [loading, setLoading] = useState({});
+            const [testCount, setTestCount] = useState(0);
+            const [showData, setShowData] = useState({});
+
+            const API_BASE = 'http://localhost:5000/api/products';
+            
+            const apis = [
+                {
+                    id: 'contains',
+                    name: 'API 1: 無優化版本',
+                    endpoint: 'search/全聯先生',
+                    description: '使用 Contains() 方法，無法利用資料庫索引，需要全表掃描 100,000 筆資料',
+                    tags: ['Contains()', '全表掃描', 'O(n)'],
+                    expectedTime: '200-300ms'
+                },
+                {
+                    id: 'index',
+                    name: 'API 2: 索引優化版本',
+                    endpoint: 'search-starts-with/全聯先生',
+                    description: '使用 StartsWith() 方法，可以利用 B-Tree 索引進行前綴搜尋',
+                    tags: ['StartsWith()', 'B-Tree Index', 'O(log n)'],
+                    highlight: true,
+                    expectedTime: '1-5ms'
+                },
+                {
+                    id: 'redis',
+                    name: 'API 3: Redis 快取版本',
+                    endpoint: 'search-cached/全聯先生',
+                    description: '使用 Redis 分散式快取 + StartsWith，第一次從 DB 讀取，後續從快取讀取',
+                    tags: ['Redis Cache', 'Cache-Aside', 'O(1)'],
+                    highlight: true,
+                    expectedTime: 'Cache Hit: 50-60ms'
+                }
+            ];
+
+            const testAPI = async (api) => {
+                setLoading(prev => ({ ...prev, [api.id]: true }));
+                
+                try {
+                    const startTime = performance.now();
+                    const response = await fetch(`${API_BASE}/${api.endpoint}`);
+                    const endTime = performance.now();
+                    const data = await response.json();
+                    const responseTime = Math.round(endTime - startTime);
+
+                    setResults(prev => ({
+                        ...prev,
+                        [api.id]: {
+                            success: true,
+                            time: responseTime,
+                            count: data.數量,
+                            description: data.說明,
+                            isCacheHit: data.是否命中快取,
+                            products: data.products || []
+                        }
+                    }));
+
+                    setTestCount(prev => prev + 1);
+                } catch (error) {
+                    setResults(prev => ({
+                        ...prev,
+                        [api.id]: {
+                            success: false,
+                            error: '請確認 API Server 是否正在運行 (localhost:5000)'
+                        }
+                    }));
+                } finally {
+                    setLoading(prev => ({ ...prev, [api.id]: false }));
+                }
+            };
+
+            const getResultClass = (time) => {
+                if (time < 50) return 'success';
+                if (time < 150) return 'warning';
+                return 'danger';
+            };
+
+            const getTimeBadge = (time) => {
+                if (time < 50) return { class: 'badge-fast', text: '超快 ⚡' };
+                if (time < 150) return { class: 'badge-medium', text: '快速 🚀' };
+                return { class: 'badge-slow', text: '較慢 🐌' };
+            };
+
+            const testAll = async () => {
+                for (const api of apis) {
+                    await testAPI(api);
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            };
+
+            return (
+                <div className="container">
+                    <div className="header">
+                        <h1>🚀 E-Commerce API 效能測試</h1>
+                        <p>Database Indexing + Redis Cache 優化展示</p>
+                        <p style={{fontSize: '1rem', marginTop: '10px'}}>資料量：100,000 筆商品</p>
+                    </div>
+
+                    {testCount > 0 && (
+                        <div className="stats">
+                            <div className="stat-card">
+                                <h3>已測試次數</h3>
+                                <div className="value">{testCount}</div>
+                            </div>
+                            {results.contains && (
+                                <div className="stat-card">
+                                    <h3>無優化版本</h3>
+                                    <div className="value">{results.contains.time}ms</div>
+                                </div>
+                            )}
+                            {results.index && (
+                                <div className="stat-card">
+                                    <h3>索引優化</h3>
+                                    <div className="value" style={{color: '#28a745'}}>{results.index.time}ms</div>
+                                </div>
+                            )}
+                            {results.redis && (
+                                <div className="stat-card">
+                                    <h3>Redis 快取</h3>
+                                    <div className="value" style={{color: '#667eea'}}>{results.redis.time}ms</div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <div style={{textAlign: 'center', marginBottom: '30px'}}>
+                        <button 
+                            className="btn-primary" 
+                            onClick={testAll}
+                            disabled={Object.values(loading).some(l => l)}
+                            style={{maxWidth: '300px', margin: '0 auto'}}
+                        >
+                            {Object.values(loading).some(l => l) ? (
+                                <>
+                                    <span className="spinner"></span>
+                                    測試中...
+                                </>
+                            ) : (
+                                '🎯 一鍵測試全部 API'
+                            )}
+                        </button>
+                    </div>
+
+                    <div className="api-grid">
+                        {apis.map(api => (
+                            <div key={api.id} className="api-card">
+                                <h2>{api.name}</h2>
+                                <p className="description">{api.description}</p>
+                                
+                                <div className="tech-tags">
+                                    {api.tags.map(tag => (
+                                        <span 
+                                            key={tag} 
+                                            className={`tech-tag ${api.highlight ? 'highlight' : ''}`}
+                                        >
+                                            {tag}
+                                        </span>
+                                    ))}
+                                </div>
+
+                                <div style={{fontSize: '0.9rem', color: '#666', marginBottom: '15px'}}>
+                                    預期時間: {api.expectedTime}
+                                </div>
+
+                                <button 
+                                    className="btn-primary"
+                                    onClick={() => testAPI(api)}
+                                    disabled={loading[api.id]}
+                                >
+                                    {loading[api.id] ? (
+                                        <>
+                                            <span className="spinner"></span>
+                                            測試中...
+                                        </>
+                                    ) : (
+                                        '🧪 測試此 API'
+                                    )}
+                                </button>
+
+                                {results[api.id] && (
+                                    <div className={`result ${results[api.id].success ? getResultClass(results[api.id].time) : 'danger'}`}>
+                                        {results[api.id].success ? (
+                                            <>
+                                                <div className="result-header">
+                                                    <div className="result-time">
+                                                        {results[api.id].time}ms
+                                                    </div>
+                                                    <span className={`result-badge ${getTimeBadge(results[api.id].time).class}`}>
+                                                        {getTimeBadge(results[api.id].time).text}
+                                                    </span>
+                                                </div>
+                                                <div className="result-details">
+                                                    <div>📊 資料筆數: {results[api.id].count?.toLocaleString()}</div>
+                                                    <div>📝 說明: {results[api.id].description}</div>
+                                                    {results[api.id].isCacheHit !== undefined && (
+                                                        <div>
+                                                            💾 快取狀態: {results[api.id].isCacheHit ? 
+                                                                '✅ Cache Hit (從 Redis 讀取)' : 
+                                                                '❌ Cache Miss (從資料庫讀取)'}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                
+                                                {results[api.id].products && results[api.id].products.length > 0 && (
+                                                    <>
+                                                        <button 
+                                                            className="toggle-data-btn"
+                                                            onClick={() => setShowData(prev => ({ ...prev, [api.id]: !prev[api.id] }))}
+                                                            style={{marginTop: '15px', width: '100%'}}
+                                                        >
+                                                            {showData[api.id] ? '🙈 隱藏資料' : '👀 顯示實際資料 (證明有連 SQL Server)'}
+                                                        </button>
+                                                        
+                                                        {showData[api.id] && (
+                                                            <div className="data-preview">
+                                                                <h4>
+                                                                    <span>📦 實際資料預覽 (前 20 筆)</span>
+                                                                    <span style={{fontSize: '0.85rem', color: '#666'}}>
+                                                                        來自 SQL Server
+                                                                    </span>
+                                                                </h4>
+                                                                <table className="data-table">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>ID</th>
+                                                                            <th>商品名稱</th>
+                                                                            <th>庫存</th>
+                                                                            <th>價格</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                        {results[api.id].products.slice(0, 20).map(product => (
+                                                                            <tr key={product.id}>
+                                                                                <td>{product.id}</td>
+                                                                                <td>{product.name}</td>
+                                                                                <td>{product.stock}</td>
+                                                                                <td>${product.price}</td>
+                                                                            </tr>
+                                                                        ))}
+                                                                    </tbody>
+                                                                </table>
+                                                                <div className="data-info">
+                                                                    💡 顯示前 20 筆，總共 {results[api.id].count?.toLocaleString()} 筆資料
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <div style={{color: '#721c24'}}>
+                                                ❌ {results[api.id].error}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+
+                    {testCount >= 3 && (
+                        <div className="comparison">
+                            <h2>📊 效能比較表</h2>
+                            <table className="comparison-table">
+                                <thead>
+                                    <tr>
+                                        <th>API</th>
+                                        <th>回應時間</th>
+                                        <th>優化技術</th>
+                                        <th>效能提升</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {results.contains && (
+                                        <tr>
+                                            <td>無優化版本</td>
+                                            <td>{results.contains.time}ms</td>
+                                            <td>無</td>
+                                            <td>基準</td>
+                                        </tr>
+                                    )}
+                                    {results.index && results.contains && (
+                                        <tr style={{background: '#d4edda'}}>
+                                            <td>索引優化版本</td>
+                                            <td>{results.index.time}ms</td>
+                                            <td>B-Tree Index</td>
+                                            <td>快 {Math.round(results.contains.time / results.index.time)} 倍 ⚡</td>
+                                        </tr>
+                                    )}
+                                    {results.redis && results.contains && (
+                                        <tr style={{background: '#cfe2ff'}}>
+                                            <td>Redis 快取版本</td>
+                                            <td>{results.redis.time}ms</td>
+                                            <td>Index + Redis</td>
+                                            <td>快 {Math.round(results.contains.time / results.redis.time)} 倍 🚀</td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
+                    <div className="footer">
+                        <p>💡 技術棧: .NET 8 + Entity Framework Core + SQL Server + Redis</p>
+                        <p style={{marginTop: '10px'}}>
+                            📂 GitHub: <a href="https://github.com/kaohaohan/E-Commerce-Backend" target="_blank">
+                                E-Commerce-Backend
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
+
