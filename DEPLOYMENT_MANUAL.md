@@ -17,8 +17,8 @@
 ## 🔑 我的 AWS 資訊
 
 ```
-AWS 帳號 ID: 585548213310
-IAM 用戶名: deploy-user
+AWS 帳號 ID: <YOUR_AWS_ACCOUNT_ID>
+IAM 用戶名: <YOUR_IAM_USER_NAME>
 Region: us-east-1
 Access Key 文件: ~/Downloads/deploy-user_accessKeys.csv
 ```
@@ -162,8 +162,8 @@ aws configure
 
 ```bash
 # 方法 2：直接設定（使用你的真實密鑰）
-aws configure set aws_access_key_id AKIAYQVLEVQ7KOKWW6M6
-aws configure set aws_secret_access_key 你的Secret_Key
+aws configure set aws_access_key_id <YOUR_ACCESS_KEY_ID>
+aws configure set aws_secret_access_key <YOUR_SECRET_ACCESS_KEY>
 aws configure set region us-east-1
 aws configure set output json
 ```
@@ -180,8 +180,8 @@ aws sts get-caller-identity
 # 應該會返回：
 # {
 #     "UserId": "...",
-#     "Account": "585548213310",
-#     "Arn": "arn:aws:iam::585548213310:user/deploy-user"
+#     "Account": "<YOUR_AWS_ACCOUNT_ID>",
+#     "Arn": "arn:aws:iam::<YOUR_AWS_ACCOUNT_ID>:user/<YOUR_IAM_USER_NAME>"
 # }
 ```
 
@@ -207,7 +207,7 @@ aws ecr describe-repositories --region us-east-1
 # 獲取登入密碼並登入（每次推送前執行）
 aws ecr get-login-password --region us-east-1 | \
   docker login --username AWS --password-stdin \
-  585548213310.dkr.ecr.us-east-1.amazonaws.com
+  <YOUR_AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
 ```
 
 ### 3. 標記並推送鏡像
@@ -215,10 +215,10 @@ aws ecr get-login-password --region us-east-1 | \
 ```bash
 # 標記本地鏡像（準備推送到 ECR）
 docker tag ecommerce-backend:latest \
-  585548213310.dkr.ecr.us-east-1.amazonaws.com/ecommerce-backend:latest
+  <YOUR_AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/ecommerce-backend:latest
 
 # 推送鏡像到 ECR
-docker push 585548213310.dkr.ecr.us-east-1.amazonaws.com/ecommerce-backend:latest
+docker push <YOUR_AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/ecommerce-backend:latest
 
 # 查看推送的鏡像
 aws ecr describe-images \
@@ -238,14 +238,14 @@ docker build -t ecommerce-backend .
 # 2. 登入 ECR
 aws ecr get-login-password --region us-east-1 | \
   docker login --username AWS --password-stdin \
-  585548213310.dkr.ecr.us-east-1.amazonaws.com
+  <YOUR_AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
 
 # 3. 標記鏡像
 docker tag ecommerce-backend:latest \
-  585548213310.dkr.ecr.us-east-1.amazonaws.com/ecommerce-backend:latest
+  <YOUR_AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/ecommerce-backend:latest
 
 # 4. 推送鏡像
-docker push 585548213310.dkr.ecr.us-east-1.amazonaws.com/ecommerce-backend:latest
+docker push <YOUR_AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/ecommerce-backend:latest
 
 echo "✅ 推送完成！"
 ```
@@ -280,7 +280,7 @@ aws ecr describe-repositories --region us-east-1
 # 重新登入
 aws ecr get-login-password --region us-east-1 | \
   docker login --username AWS --password-stdin \
-  585548213310.dkr.ecr.us-east-1.amazonaws.com
+  <YOUR_AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
 ```
 
 ### 問題 3：Docker 構建失敗
@@ -370,16 +370,16 @@ docker build -t ecommerce-backend .
 echo "🔐 登入 AWS ECR..."
 aws ecr get-login-password --region us-east-1 | \
   docker login --username AWS --password-stdin \
-  585548213310.dkr.ecr.us-east-1.amazonaws.com
+  <YOUR_AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com
 
 # 3. 標記鏡像
 echo "🏷️  標記鏡像..."
 docker tag ecommerce-backend:latest \
-  585548213310.dkr.ecr.us-east-1.amazonaws.com/ecommerce-backend:latest
+  <YOUR_AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/ecommerce-backend:latest
 
 # 4. 推送鏡像
 echo "⬆️  推送鏡像到 ECR..."
-docker push 585548213310.dkr.ecr.us-east-1.amazonaws.com/ecommerce-backend:latest
+docker push <YOUR_AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/ecommerce-backend:latest
 
 echo "✅ 推送完成！"
 ```
@@ -415,7 +415,7 @@ docker volume inspect 卷名稱
 
 ## 🎤 面試時如何展示
 
-### 1. 本地演示流程（2分鐘）
+### 1. 本地演示流程（2 分鐘）
 
 ```
 1. 展示 demo.html 界面
@@ -482,4 +482,3 @@ docker volume inspect 卷名稱
 **最後更新：2025-11-17**
 
 **作者：haohan920**
-
